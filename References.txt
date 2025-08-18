@@ -1,3 +1,5 @@
 Examples of Spectral Graph Theory being applied in urban planning contexts:
 https://doi.org/10.1016/j.trpro.2017.12.019
-https://doi.org/10.1016/j.jum.2025.01.003          [sort of, uses neural networks to do clustering]
+https://doi.org/10.1016/j.jum.2025.01.003  [sort of, uses neural networks to do clustering]
+https://www.doi.org/10.33545/26648636.2025.v7.i1b.113  [Modern uses of spectral graph theory]
+https://math.uchicago.edu/~may/REU2012/REUPapers/JiangJ.pdf  [Introduction to spectral graph theory]
