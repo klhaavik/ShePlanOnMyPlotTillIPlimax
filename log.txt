@@ -1,1 +1,5 @@
+8/31:
+For some reason, though the graph looks fine with no edge overlap from visual inspection, it is completely broken and detected as nonplanar with no counterexample returned by check_planarity(). For now, I'm artificially making it planar; however, this is getting rid of some of the roads. Probably to do with double/overlapping vertices imported from OSM, to fix later.
 
+9/1:
+Trying to fix the above issue with
