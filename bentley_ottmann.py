@@ -274,7 +274,7 @@ def ensure_planar_graph(G, remove_intersections: bool = True, is_multigraph: boo
                 G_with_coords.nodes[node]['y'] = y
                 print(x, y)
 
-            nx.draw(G_with_coords, positions, node_size=100)
+            # nx.draw(G_with_coords, positions, node_size=100)
             
             print(f"Added coordinates using {layout_func.__name__}")
             
@@ -354,7 +354,9 @@ def ensure_planar_graph(G, remove_intersections: bool = True, is_multigraph: boo
                 edge_key = (u, v)
                 segment = Segment(start_point, end_point, edge_key)
                 segments.append(segment)
-    
+
+    nx.draw(G_with_coords, positions, node_size=100)
+
     print(f"Analyzing {len(segments)} segments for intersections...")
     print(f"Graph type: {'MultiGraph' if is_multigraph else 'Graph'}")
     
@@ -397,40 +399,77 @@ def ensure_planar_graph(G, remove_intersections: bool = True, is_multigraph: boo
         
         print(f"Removed {len(removed_edges)} intersecting edges")
     else:
-        edges_to_remove = set()
+        
+        intersection_list = list(intersections)
 
-        for seg1, seg2, intersection_point in intersections:
+        for seg1, seg2, intersection_point in intersection_list:
             node_counter = len(G_planar.nodes)
             G_planar.add_node(f"inter_{node_counter}", x=intersection_point.x, y=intersection_point.y)
 
-        edges_to_remove.add(seg1.edge_key)
-        edges_to_remove.add(seg2.edge_key)
+            edges_to_remove = set()
+            edges_to_remove.add(seg1.edge_key)
+            edges_to_remove.add(seg2.edge_key)
         
-        # Remove edges from graph based on graph type
-        for edge_key in edges_to_remove:
-            if is_multigraph:
-                # MultiGraph: edge_key is (u, v, key)
-                u, v, key = edge_key
-                if G_planar.has_edge(u, v, key):
-                    G_planar.remove_edge(u, v, key)
-                    removed_edges.append(edge_key)
-            else:
-                # Regular Graph: edge_key is (u, v)
-                u, v = edge_key
-                print(u, v)
-                if G_planar.has_edge(u, v):
-                    G_planar.remove_edge(u, v)
-                    removed_edges.append(edge_key)
+            # Remove edges from graph based on graph type
+            for edge_key in edges_to_remove:
+                if is_multigraph:
+                    # MultiGraph: edge_key is (u, v, key)
+                    u, v, key = edge_key
+                    if G_planar.has_edge(u, v, key):
+                        G_planar.remove_edge(u, v, key)
+                        removed_edges.append(edge_key)
+                else:
+                    # Regular Graph: edge_key is (u, v)
+                    u, v = edge_key
+                    print(u, v)
+                    if G_planar.has_edge(u, v):
+                        G_planar.remove_edge(u, v)
+                        removed_edges.append(edge_key)
 
-        points_to_connect = set()
-        points_to_connect.add(seg1.edge_key[0])
-        points_to_connect.add(seg1.edge_key[1])
-        points_to_connect.add(seg2.edge_key[0])
-        points_to_connect.add(seg2.edge_key[1])
+            points_to_connect = set()
+            points_to_connect.add(seg1.edge_key[0])
+            points_to_connect.add(seg1.edge_key[1])
+            points_to_connect.add(seg2.edge_key[0])
+            points_to_connect.add(seg2.edge_key[1])
 
 
-        for point in points_to_connect:
-            G_planar.add_edge(point, f"inter_{node_counter}", key=f"new_{node_counter}")
+            for point in points_to_connect:
+                G_planar.add_edge(point, f"inter_{node_counter}", key=f"new_{node_counter}")
+                if is_multigraph:
+                    new_seg = Segment(
+                        Point(G_planar.nodes[point]['x'], G_planar.nodes[point]['y']), 
+                        Point(G_planar.nodes[f"inter_{node_counter}"]['x'], G_planar.nodes[f"inter_{node_counter}"]['y']),
+                        edge_key=(point, f"inter_{node_counter}", f"new_{node_counter}")
+                    )
+                else:
+                    new_seg = Segment(
+                        Point(G_planar.nodes[point]['x'], G_planar.nodes[point]['y']), 
+                        Point(G_planar.nodes[f"inter_{node_counter}"]['x'], G_planar.nodes[f"inter_{node_counter}"]['y']),
+                        edge_key=(point, f"inter_{node_counter}")
+                    )
+                segments.append(new_seg)
+                
+                for i in range(0, len(intersection_list)):
+                    intersection = intersection_list[i]
+                    if intersection == (seg1, seg2, intersection_point):
+                        continue
+                    must_edit = False
+                    for j in range(0, 2):
+                        # print(j, intersection[j])
+                        if intersection[j].start == new_seg.start or intersection[j].end == new_seg.end or intersection[j].start == new_seg.end or intersection[j].end == new_seg.start:
+                            # print("must edit")
+                            must_edit = True
+                            index = j
+                            break
+                    if not must_edit: continue
+
+                    # print("editing intersection")
+                    if index == 0:
+                        intersection_list[i] = (new_seg, intersection[1], intersection[2])
+                        # print("New intersection:", intersection_list[i][2])
+                    elif index == 1:
+                        intersection_list[i] = (intersection[0], new_seg, intersection[2])
+                        # print("New intersection:", intersection_list[i][2])
 
         print(f"Added {node_counter - len(edges_to_remove)} nodes at intersections and connected them")
 
@@ -440,10 +479,13 @@ def ensure_planar_graph(G, remove_intersections: bool = True, is_multigraph: boo
     else:
         test_graph = G_planar
     
-    nx.draw(G_planar, node_size=100)
+    # nx.draw(G_planar, node_size=100)
 
     is_planar = nx.is_planar(test_graph)
     print(f"Resulting graph is planar: {is_planar}")
+
+    # planar_pos = nx.planar_layout(test_graph)
+    # nx.draw(test_graph, planar_pos, node_size=100)
     
     return G_planar, intersections
 

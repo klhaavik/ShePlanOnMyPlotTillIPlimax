@@ -2,4 +2,8 @@
 For some reason, though the graph looks fine with no edge overlap from visual inspection, it is completely broken and detected as nonplanar with no counterexample returned by check_planarity(). For now, I'm artificially making it planar; however, this is getting rid of some of the roads. Probably to do with double/overlapping vertices imported from OSM, to fix later.
 
 9/1:
-Trying to fix the above issue with
+Trying to fix the above issue by adding nodes at intersections and connecting them up instead of just removing the edges. 
+My algorithm has a 3-level nested for loop currently which doesn't seem ideal. I might come back to optimizing this later if runtime proves particularly bad.
+Just kidding, I'm actually using an implementation by GitHub user ideasman42: github.com/ideasman42/isect_segments-bentley_ottmann/. This thing is FAST!
+Where I'm leaving off is getting the intersection points to display on the graph, followed by actually splitting the segments at intersections.
+This algorithm is bringing up my hopes for the real-time dream!
