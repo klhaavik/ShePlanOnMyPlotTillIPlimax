@@ -555,6 +555,7 @@ def isect_segments_impl(segments, *, include_segments=False, validate=True) -> l
             (s[0], s[1]) if (s[0] <= s[1]) else
             (s[1], s[0])
             for s in segments]
+        print(segments)
     else:
         segments = [
             # in nearly all cases, comparing X is enough,
@@ -568,7 +569,6 @@ def isect_segments_impl(segments, *, include_segments=False, validate=True) -> l
                 (Real(s[0][0]), Real(s[0][1])),
             )
             for s in segments]
-
     # Ensure segments don't have duplicates or single points, see: #24.
     if validate:
         segments_old = segments

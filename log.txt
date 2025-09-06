@@ -7,3 +7,8 @@ My algorithm has a 3-level nested for loop currently which doesn't seem ideal. I
 Just kidding, I'm actually using an implementation by GitHub user ideasman42: github.com/ideasman42/isect_segments-bentley_ottmann/. This thing is FAST!
 Where I'm leaving off is getting the intersection points to display on the graph, followed by actually splitting the segments at intersections.
 This algorithm is bringing up my hopes for the real-time dream!
+
+9/6:
+Not attempting to subdivide graph and reconnect all segments to the intersection nodes because it seems unreasonably complicated. Sticking with removing the nodes for now.
+Where I'm leaving off: 
+Getting a random bug with the event tree when passing the coordinates of the graph as a tuple of tuples to isect_segments(), even though the same data type works fine in a testing file. Doesn't seem to be an error with floating point precision (OSM lat/long precision still leaves 10+ decimal places unused). Will come back to later.

@@ -7,6 +7,7 @@ import itertools as it
 from bentley_ottmann import ensure_planar_graph
 from dual_graph import build_dual_graph
 import poly_point_isect
+import math
 
 def voronoi_to_networkx(points):
 # we get the voronoi diagram
@@ -72,11 +73,11 @@ def generate_coordinates(G, is_multigraph=False, layout_func=None):
         for node, (x, y) in positions.items():
             G_with_coords.nodes[node]['x'] = x
             G_with_coords.nodes[node]['y'] = y
-            print(x, y)
+            # print(x, y)
 
             # nx.draw(G_with_coords, positions, node_size=100)
             
-            print(f"Added coordinates using {layout_func.__name__}")
+            # print(f"Added coordinates using {layout_func.__name__}")
             
     except Exception as e:
         print(f"Error generating layout: {e}")
@@ -95,35 +96,106 @@ def generate_coordinates(G, is_multigraph=False, layout_func=None):
 
     return G_with_coords
 
+def remove_intersecting_edges(G_planar, intersections, is_multigraph=False):
+    removed_edges = []
+    edges_to_remove = set()
+
+    X = 0
+    Y = 1
+    Start = 0
+    End = 1
+
+    for intersection_point, (seg1, seg2) in intersections:
+        # print(seg1, seg2)
+        # Calculate edge lengths
+        len1 = ((seg1[End][X] - seg1[Start][X])**2 + (seg1[End][Y] - seg1[Start][Y])**2)**0.5
+        len2 = ((seg2[End][X] - seg2[Start][X])**2 + (seg2[End][Y] - seg2[Start][Y])**2)**0.5
+        
+        # Remove the longer edge
+        edge_to_remove = seg2 if len1 < len2 else seg1
+        # print(edge_to_remove)
+        for node in G_planar.nodes(data=True):
+            # print("Graph node coords:", node[1]['x'], node[1]['y'])
+            # print("Edge start coords:", edge_to_remove[Start][X], edge_to_remove[Start][Y])
+            # print("Edge end coords:", edge_to_remove[End][X], edge_to_remove[End][Y])
+            if math.isclose(node[1]['x'], edge_to_remove[Start][X]) and math.isclose(node[1]['y'], edge_to_remove[Start][Y]):
+                u = node[0]
+                # print("Added as u")
+            if math.isclose(node[1]['x'], edge_to_remove[End][X]) and math.isclose(node[1]['y'], edge_to_remove[End][Y]):
+                v = node[0]
+                # print("Added as v")
+            # print("\n")
+        if is_multigraph:
+            edges_to_remove.add((u, v, 0)) # placeholder key
+        else:
+            edges_to_remove.add((u, v))
+        # print(f"Marked edge {edge_to_remove} for removal due to intersection at {intersection_point}")
+    
+    # Remove edges from graph based on graph type
+    for edge_key in edges_to_remove:
+        print(edge_key)
+        if is_multigraph:
+            # MultiGraph: edge_key is (u, v, key)
+            u, v, key = edge_key
+            if G_planar.has_edge(u, v, key):
+                G_planar.remove_edge(u, v, key)
+                removed_edges.append(edge_key)
+        else:
+            # Regular Graph: edge_key is (u, v)
+            u, v = edge_key
+            if G_planar.has_edge(u, v):
+                G_planar.remove_edge(u, v)
+                removed_edges.append(edge_key)
+    
+    print(f"Removed {len(removed_edges)} intersecting edges")
+    return G_planar, removed_edges
+
 G = ox.graph.graph_from_point((37.79, -122.41), dist=750, network_type="drive", simplify=True)
-print(type(G))
+# print(type(G))
 # node_coords = [[data['y'], data['x']] for node, data in G.nodes(data=True)]
 # dual = voronoi_to_networkx(node_coords)
 # pos = dict(zip(dual.nodes(), dual.nodes()))
 # nx.draw(dual, pos,node_size=5)
 
-G = nx.complete_graph(5)
-print(type(G))
+# G = nx.complete_graph(5)
+# print(type(G))
 
 # G = nx.cycle_graph(3)
 # print(type(G))
 
 is_planar, embedding = nx.check_planarity(G.to_undirected())
-print(is_planar)
-print(embedding)
+# print(is_planar)
+# print(embedding)
 
-G_with_coords = generate_coordinates(G, is_multigraph=False, layout_func=nx.spring_layout)
-for n in G_with_coords:
-    print(n)
+# fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(12, 6))
+# ax1.set_visible(True)
+# ax2.set_visible(True)
+# for ax in (ax1, ax2):
+#     limits=plt.axis('on') # turns on axis
+#     ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
+#     ax.xaxis.set_label_text("X")
+#     ax.yaxis.set_label_text("Y")
+#     ax.set_aspect('equal', adjustable='box')
 
-for node in G_with_coords.nodes(data=True):
-    print(node[1]['x'], node[1]['y'])
+# G_with_coords = generate_coordinates(G, is_multigraph=False, layout_func=nx.spring_layout)
+G_with_coords = G.copy()
+# for n in G_with_coords:
+#     print(n)
 
-for u, v, data in G_with_coords.edges(data=True):
-    print(u, v, data)
+# counter = 0
+# for node in G_with_coords.nodes(data=True):
+    # print(node[1]['x'], node[1]['y'])
 
-print(G_with_coords.nodes[0])
-nx.draw(G_with_coords, {n: (data['x'], data['y']) for n, data in G_with_coords.nodes(data=True)}, node_size=100)
+# for u, v, data in G_with_coords.edges(data=True):
+#     print(data["geometry"])
+# print(G_with_coords.edges(data=True))
+
+# print(G_with_coords.nodes[0])
+
+fig, ax = ox.plot.plot_graph(
+    G_with_coords, bgcolor="k", node_color="blue", node_size=50, edge_linewidth=2, edge_color="#333333"
+)
+# nx.draw(G_with_coords, {n: (data['x'], data['y']) for n, data in G_with_coords.nodes(data=True)}, ax=ax1, node_size=100)
 
 if not is_planar:
     # for i in range(0, 10):
@@ -131,35 +203,55 @@ if not is_planar:
     #     is_planar, embedding = nx.check_planarity(G_planar.to_undirected())
     #     print(is_planar)
     #     print(embedding)
-    coordinates = []
-    counter = 0
-    for i in range(0, 10):
-        node = G_with_coords.nodes(data=True)[counter]
-        coordinates.append((float(node['x']), float(node['y'])))
-        if i >= 5:
-            counter += 2
-        else:
-            counter += 1
-        counter = counter % len(G_with_coords.nodes())
+
+
+
+    # algorithm to add nodes traveled in order for K(5) for input to isect_polygon()
+    # coordinates = []
+    # counter = 0
+    # for i in range(0, 10):
+    #     node = G_with_coords.nodes(data=True)[counter]
+    #     coordinates.append((float(node['x']), float(node['y'])))
+    #     if i >= 5:
+    #         counter += 2
+    #     else:
+    #         counter += 1
+    #     counter = counter % len(G_with_coords.nodes())
+    poly = []
+    for u, v, data in G_with_coords.edges(data=True):
+        start_point = (G_with_coords.nodes(data=True)[u]['x'], G_with_coords.nodes(data=True)[u]['y'])
+        end_point = (G_with_coords.nodes(data=True)[v]['x'], G_with_coords.nodes(data=True)[v]['y'])
+        # print(tuple((start_point, end_point)))
+        poly.append(tuple((start_point, end_point)))
     # poly = [((data['x'], data['y']), (data2['x'], data2['y'])) for u, v, data in G_with_coords.edges(data=True) for data2 in [G_with_coords.nodes[v]]]
-    poly: tuple[tuple[float, float], ...] = tuple(tuple(coord) for coord in coordinates)
+    # poly = tuple((s, c) for (s, c) in poly)
     print(poly)
-    print(type(poly))
-    print(type(poly[0]))
-    print(type(poly[0][0]))
-    intersection_points = poly_point_isect.isect_polygon(poly, validate=True)
-    print(intersection_points)
-    intersection_point_graph = nx.Graph()
-    for i, (x, y) in enumerate(intersection_points):
-        intersection_point_graph.add_node(i, pos=(x, y), x=x, y=y)
-    nx.draw(intersection_point_graph, {i: (x, y) for i, (x, y) in enumerate(intersection_points)}, node_size=5)
+    intersection_points = poly_point_isect.isect_segments_include_segments(poly, validate=True)
+    # for pair in intersection_points:
+    #     print(pair)
+
+
+
+    G_planar, removed_edges = remove_intersecting_edges(G_with_coords, intersection_points, is_multigraph=False)
+    is_planar, embedding = nx.check_planarity(G_planar.to_undirected())
+    
+    # intersection_point_graph = nx.Graph()
+    # for i, (x, y) in enumerate(intersection_points):
+    #     intersection_point_graph.add_node(i, pos=(x, y), x=x, y=y)
+    # nx.draw(intersection_point_graph, {i: (x, y) for i, (x, y) in enumerate(intersection_points)}, ax=ax2, node_size=100)
+    # fig, ax = ox.plot.plot_graph(
+    #     G_planar, bgcolor="k", node_color="blue", node_size=50, edge_linewidth=2, edge_color="#333333"
+    # )
+    # nx.draw(G_planar, {n: (data['x'], data['y']) for n, data in G_planar.nodes(data=True)}, ax=ax2, node_size=100)
+
+
 else:
     G_planar = G
 
 
-# fig, ax = ox.plot.plot_graph(
-#     G_planar, bgcolor="k", node_color="blue", node_size=50, edge_linewidth=2, edge_color="#333333"
-# )
+fig, ax = ox.plot.plot_graph(
+    G_planar, bgcolor="k", node_color="blue", node_size=50, edge_linewidth=2, edge_color="#333333"
+)
 
 # dual = build_dual_graph(G_planar, use_coordinates=False, return_multidigraph=True)
 # is_planar, embedding = nx.check_planarity(dual)
@@ -182,9 +274,7 @@ else:
 
 
 
-# fig, ax = ox.plot.plot_graph(
-#     dual, ax=bgcolor="k", node_color="blue", node_size=50, edge_linewidth=2, edge_color="#333333"
-# )
+
 
 def draw_labeled_multigraph(G, attr_name, ax=None):
     """

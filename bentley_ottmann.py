@@ -272,11 +272,11 @@ def ensure_planar_graph(G, remove_intersections: bool = True, is_multigraph: boo
             for node, (x, y) in positions.items():
                 G_with_coords.nodes[node]['x'] = x
                 G_with_coords.nodes[node]['y'] = y
-                print(x, y)
+                # print(x, y)
 
             # nx.draw(G_with_coords, positions, node_size=100)
             
-            print(f"Added coordinates using {layout_func.__name__}")
+            # print(f"Added coordinates using {layout_func.__name__}")
             
         except Exception as e:
             print(f"Error generating layout: {e}")
