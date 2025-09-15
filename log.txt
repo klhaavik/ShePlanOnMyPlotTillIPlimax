@@ -12,3 +12,10 @@ This algorithm is bringing up my hopes for the real-time dream!
 Not attempting to subdivide graph and reconnect all segments to the intersection nodes because it seems unreasonably complicated. Sticking with removing the nodes for now.
 Where I'm leaving off: 
 Getting a random bug with the event tree when passing the coordinates of the graph as a tuple of tuples to isect_segments(), even though the same data type works fine in a testing file. Doesn't seem to be an error with floating point precision (OSM lat/long precision still leaves 10+ decimal places unused). Will come back to later.
+
+9/8 call notes:
+- find if one graph is dual of another graph
+- work on formatting arcgis as input to graph together when we get to that step
+
+9/14:
+Temporary fix to the error on 9/6 by removing all bridges and tunnels before running the algorithm. Still removing some odd edges where no overlap is discernible but am moving on to the dual construction for now.

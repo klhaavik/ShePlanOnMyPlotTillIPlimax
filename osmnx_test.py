@@ -150,7 +150,7 @@ def remove_intersecting_edges(G_planar, intersections, is_multigraph=False):
     print(f"Removed {len(removed_edges)} intersecting edges")
     return G_planar, removed_edges
 
-G = ox.graph.graph_from_point((37.79, -122.41), dist=750, network_type="drive", simplify=True)
+G = ox.graph.graph_from_point((37.79, -122.407), dist=500, network_type="drive", simplify=True)
 # print(type(G))
 # node_coords = [[data['y'], data['x']] for node, data in G.nodes(data=True)]
 # dual = voronoi_to_networkx(node_coords)
@@ -164,8 +164,8 @@ G = ox.graph.graph_from_point((37.79, -122.41), dist=750, network_type="drive", 
 # print(type(G))
 
 is_planar, embedding = nx.check_planarity(G.to_undirected())
-# print(is_planar)
-# print(embedding)
+print(is_planar)
+print(embedding)
 
 # fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(12, 6))
 # ax1.set_visible(True)
@@ -183,18 +183,14 @@ G_with_coords = G.copy()
 #     print(n)
 
 # counter = 0
-# for node in G_with_coords.nodes(data=True):
-    # print(node[1]['x'], node[1]['y'])
+for node in G_with_coords.nodes(data=True):
+    print(node)
 
-# for u, v, data in G_with_coords.edges(data=True):
-#     print(data["geometry"])
+
 # print(G_with_coords.edges(data=True))
 
 # print(G_with_coords.nodes[0])
 
-fig, ax = ox.plot.plot_graph(
-    G_with_coords, bgcolor="k", node_color="blue", node_size=50, edge_linewidth=2, edge_color="#333333"
-)
 # nx.draw(G_with_coords, {n: (data['x'], data['y']) for n, data in G_with_coords.nodes(data=True)}, ax=ax1, node_size=100)
 
 if not is_planar:
@@ -204,8 +200,18 @@ if not is_planar:
     #     print(is_planar)
     #     print(embedding)
 
+    segments_to_remove = []
+    for u, v, data in G_with_coords.edges(data=True):
+        if 'tunnel' in data and data['tunnel'] == 'yes':
+            segments_to_remove.append((u, v))
+        if 'bridge' in data and data['bridge'] == 'yes':
+            segments_to_remove.append((u, v))
 
+    G_with_coords.remove_edges_from(segments_to_remove)
 
+    fig, ax = ox.plot.plot_graph(
+        G_with_coords, bgcolor="k", node_color="blue", node_size=50, edge_linewidth=2, edge_color="#333333"
+    )
     # algorithm to add nodes traveled in order for K(5) for input to isect_polygon()
     # coordinates = []
     # counter = 0
@@ -217,16 +223,16 @@ if not is_planar:
     #     else:
     #         counter += 1
     #     counter = counter % len(G_with_coords.nodes())
-    poly = []
+    segments = []
     for u, v, data in G_with_coords.edges(data=True):
         start_point = (G_with_coords.nodes(data=True)[u]['x'], G_with_coords.nodes(data=True)[u]['y'])
         end_point = (G_with_coords.nodes(data=True)[v]['x'], G_with_coords.nodes(data=True)[v]['y'])
         # print(tuple((start_point, end_point)))
-        poly.append(tuple((start_point, end_point)))
+        segments.append(tuple((start_point, end_point)))
     # poly = [((data['x'], data['y']), (data2['x'], data2['y'])) for u, v, data in G_with_coords.edges(data=True) for data2 in [G_with_coords.nodes[v]]]
     # poly = tuple((s, c) for (s, c) in poly)
-    print(poly)
-    intersection_points = poly_point_isect.isect_segments_include_segments(poly, validate=True)
+    # print(segments)
+    intersection_points = poly_point_isect.isect_segments_include_segments(segments, validate=True)
     # for pair in intersection_points:
     #     print(pair)
 
@@ -253,10 +259,24 @@ fig, ax = ox.plot.plot_graph(
     G_planar, bgcolor="k", node_color="blue", node_size=50, edge_linewidth=2, edge_color="#333333"
 )
 
-# dual = build_dual_graph(G_planar, use_coordinates=False, return_multidigraph=True)
-# is_planar, embedding = nx.check_planarity(dual)
-# print(is_planar)
-# print(embedding)
+dual = build_dual_graph(G_planar, use_coordinates=True, weight_edges=False, return_multidigraph=True)
+is_planar, embedding = nx.check_planarity(dual)
+print(is_planar)
+print(embedding)
+
+max_degree_node = max(dual.degree(), key=lambda x: x[1])[0]
+print(f"Removing node {max_degree_node} with degree {dual.degree(max_degree_node)}")
+dual.remove_node(max_degree_node)
+is_planar, embedding = nx.check_planarity(dual)
+print(is_planar)
+print(embedding)
+    
+fig, ax = ox.plot.plot_graph(
+    dual, bgcolor="k", node_color="red", node_size=50, edge_linewidth=2, edge_color="#333333"
+)
+
+pos = nx.planar_layout(dual)
+nx.draw(dual, pos=pos, with_labels=True)
 # print(dual.nodes(data=True))
 
 # G_with_coords = G.copy()
