@@ -17,5 +17,6 @@ plt.show()
 
 dual = build_dual_graph(G, use_coordinates=False, return_multidigraph=True)
 is_planar, embedding = nx.check_planarity(dual)
+print(is_planar)
 nx.draw(dual, with_labels=True)
 plt.show()

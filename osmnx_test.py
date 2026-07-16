@@ -133,7 +133,7 @@ def remove_intersecting_edges(G_planar, intersections, is_multigraph=False):
     
     # Remove edges from graph based on graph type
     for edge_key in edges_to_remove:
-        print(edge_key)
+        # print(edge_key)
         if is_multigraph:
             # MultiGraph: edge_key is (u, v, key)
             u, v, key = edge_key
@@ -147,7 +147,7 @@ def remove_intersecting_edges(G_planar, intersections, is_multigraph=False):
                 G_planar.remove_edge(u, v)
                 removed_edges.append(edge_key)
     
-    print(f"Removed {len(removed_edges)} intersecting edges")
+    # print(f"Removed {len(removed_edges)} intersecting edges")
     return G_planar, removed_edges
 
 G = ox.graph.graph_from_point((37.79, -122.407), dist=500, network_type="drive", simplify=True)
@@ -183,8 +183,8 @@ G_with_coords = G.copy()
 #     print(n)
 
 # counter = 0
-for node in G_with_coords.nodes(data=True):
-    print(node)
+# for node in G_with_coords.nodes(data=True):
+#     print(node)
 
 
 # print(G_with_coords.edges(data=True))

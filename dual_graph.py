@@ -128,7 +128,7 @@ def build_dual_graph(G, use_coordinates=True, weight_edges=True, return_multidig
         raise ValueError("Graph is not planar")
 
     faces = get_faces(G)
-    print(faces)
+    # print(faces)
     
     # Choose the appropriate graph type
     if return_multidigraph:
